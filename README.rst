@@ -7,4 +7,4 @@ fio-buffer
 .. image:: https://coveralls.io/repos/geowurster/fio-buffer/badge.svg?branch=master
     :target: https://coveralls.io/r/geowurster/fio-buffer?branch=master
 
-CLI plugin for Fiona to produce buffered geometries
+CLI plugin for Fiona to produce buffered geometries via `shapely <https://github.com/toblerity/shapely>`_.
