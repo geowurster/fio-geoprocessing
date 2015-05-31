@@ -55,6 +55,8 @@ setup(
     entry_points="""
         [fiona.fio_commands]
         buffer=fio_geoprocessing.buffer:buffer_geometries
+        centroid=fio_geoprocessing.centroid:compute_centroids
+        filter=fio_geoprocessing.filter:apply_filter
     """,
     extras_require={
         'test': ['pytest', 'pytest-cov']
