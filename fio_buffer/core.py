@@ -8,6 +8,8 @@ Core components for fio-buffer
 
 import copy
 import logging
+from multiprocessing import cpu_count
+from multiprocessing import Pool
 
 import click
 import fiona as fio
@@ -50,6 +52,53 @@ def _cb_res(ctx, param, value):
         raise click.BadParameter("must be a positive value")
 
     return value
+
+
+def _processor(args):
+
+    """
+    Process a single feature
+
+    Parameters
+    ----------
+    args : dict
+        feat - A GeoJSON feature to process.
+        src_crs - The geometry's CRS.
+        buf_crs - Apply buffer after reprojecting to this CRS.
+        dst_crs - Reproject buffered geometry to this CRS before returning.
+        skip_failures - If True then Exceptions don't stop processing.
+        buf_args - Keyword arguments for the buffer operation.
+    """
+
+    feat = args['feat']
+    src_crs = args['src_crs']
+    buf_crs = args['buf_crs']
+    dst_crs = args['dst_crs']
+    skip_failures = args['skip_failures']
+    buf_args = args['buf_args']
+
+    try:
+        # src_crs -> buf_crs
+        reprojected = transform_geom(
+            src_crs, buf_crs, feat['geometry'],
+            antimeridian_cutting=True
+        )
+
+        # buffering operation
+        buffered = asShape(reprojected).buffer(**buf_args)
+
+        # buf_crs -> dst_crs
+        feat['geometry'] = transform_geom(
+            buf_crs, dst_crs, mapping(buffered),
+            antimeridian_cutting=True
+        )
+
+        return feat
+
+    except Exception:
+        log.exception("Feature with ID %s failed" % feat.get('id'))
+        if not skip_failures:
+            raise
 
 
 @click.command(name='buffer')
@@ -100,9 +149,14 @@ def _cb_res(ctx, param, value):
     '--skip-failures', is_flag=True,
     help="Skip geometries that fail somewhere in the processing pipeline."
 )
+@click.option(
+    '--jobs', type=click.IntRange(1, cpu_count()), default=1,
+    help="Process geometries in parallel across N cores.  The goal of this flag is speed so "
+         "feature order is not preserved. (default: 1)"
+)
 @click.pass_context
 def buffer_geometries(ctx, infile, outfile, driver, cap_style, join_style, res, mitre_limit,
-                      dist, src_crs, buf_crs, dst_crs, output_geom_type, skip_failures):
+                      dist, src_crs, buf_crs, dst_crs, output_geom_type, skip_failures, jobs):
 
     """
     Buffer geometries with shapely.
@@ -136,11 +190,12 @@ def buffer_geometries(ctx, infile, outfile, driver, cap_style, join_style, res, 
 
     with fio.open(infile, 'r') as src:
 
+        log.debug("Resolving CRS fall backs")
+
         src_crs = src_crs or src.crs
         buf_crs = buf_crs or src_crs
         dst_crs = dst_crs or buf_crs
 
-        log.debug("Resolving CRS fall backs")
         log.debug("src_crs=%s" % src_crs)
         log.debug("buf_crs=%s" % buf_crs)
         log.debug("dst_crs=%s" % dst_crs)
@@ -157,36 +212,29 @@ def buffer_geometries(ctx, infile, outfile, driver, cap_style, join_style, res, 
         log.debug("Meta=%s" % meta)
 
         with fio.open(outfile, 'w', **meta) as dst, click.progressbar(src) as features:
-            for feat in features:
 
-                try:
-                    # src_crs -> buf_crs
-                    reprojected = transform_geom(
-                        src_crs, buf_crs, feat['geometry'],
-                        antimeridian_cutting=True
-                    )
+            # Keyword arguments for `<Geometry>.buffer()`
+            buf_args = {
+                'distance': dist,
+                'resolution': res,
+                'cap_style': cap_style,
+                'join_style': join_style,
+                'mitre_limit': mitre_limit
+            }
 
-                    # buffering operation
-                    buffered = asShape(reprojected).buffer(
-                        distance=dist,
-                        resolution=res,
-                        cap_style=cap_style,
-                        join_style=join_style,
-                        mitre_limit=mitre_limit
-                    )
+            # A generator that produces the arguments required for `_processor()`
+            task_generator = (
+                {
+                    'feat': feat,
+                    'src_crs': src_crs,
+                    'buf_crs': buf_crs,
+                    'dst_crs': dst_crs,
+                    'skip_failures': skip_failures,
+                    'buf_args': buf_args
+                } for feat in features)
 
-                    # buf_crs -> dst_crs
-                    feat['geometry'] = transform_geom(
-                        buf_crs, dst_crs, mapping(buffered),
-                        antimeridian_cutting=True
-                    )
-
-                    dst.write(feat)
-
-                except Exception:
-                    log.exception("Feature %s failed" % feat.get('id'))
-                    if not skip_failures:
-                        raise
+            for feat in Pool(jobs).imap_unordered(_processor, task_generator):
+                dst.write(feat)
 
 
 if __name__ == '__main__':
