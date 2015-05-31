@@ -1,12 +1,12 @@
 """
-CLI plugin for Fiona to produce buffered geometries
+A Fiona CLI plugin for performing geoprocessing operations.
 """
 
 
 __version__ = '0.1'
 __author__ = 'Kevin Wurster'
 __email__ = 'wursterk@gmail.com'
-__source__ = 'https://github.com/geowurster/fio-buffer'
+__source__ = 'https://github.com/geowurster/fio-geoprocessing'
 __license__ = '''
 New BSD License
 

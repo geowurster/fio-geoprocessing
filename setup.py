@@ -2,7 +2,7 @@
 
 
 """
-Setup script for fio-buffer
+Setup script for fio-geoprocessing
 """
 
 
@@ -23,7 +23,7 @@ version = None
 author = None
 email = None
 source = None
-with open(os.path.join('fio_buffer', '__init__.py')) as f:
+with open(os.path.join('fio_geoprocessing', '__init__.py')) as f:
     for line in f:
         if line.strip().startswith('__version__'):
             version = line.split('=')[1].strip().replace('"', '').replace("'", '')
@@ -51,20 +51,20 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Topic :: Scientific/Engineering :: GIS'
     ],
-    description="CLI plugin for Fiona to produce buffered geometries.",
+    description="A Fiona CLI plugin for performing geoprocessing operations.",
     entry_points="""
         [fiona.fio_commands]
-        buffer=fio_buffer.core:buffer_geometries
+        buffer=fio_geoprocessing.buffer:buffer_geometries
     """,
     extras_require={
         'test': ['pytest', 'pytest-cov']
     },
     include_package_data=True,
     install_requires=['click>=0.3', 'shapely', 'fiona'],
-    keywords='Fiona fio GIS vector buffer plugin',
+    keywords='Fiona fio GIS vector geoprocessing plugin',
     license=license,
     long_description=readme,
-    name='fio-buffer',
+    name='fio-geoprocessing',
     packages=find_packages(),
     url=source,
     version=version,

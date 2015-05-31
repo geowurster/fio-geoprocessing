@@ -2,7 +2,7 @@
 
 
 """
-Core components for fio-buffer
+Core components for `fio buffer`.
 """
 
 
