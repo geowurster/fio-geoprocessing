@@ -95,7 +95,7 @@ def _processor(args):
 @click.command()
 @options.infile
 @options.outfile
-@click.argument(
+@click.option(
     '--expr', 'expressions', multiple=True,
     help="Python expression that evaluates as boolean.  Multiple expressions can be specified "
          "and are evaluated in order.  Only features that pass all expressoins are written."
@@ -117,7 +117,7 @@ def filter(ctx, infile, outfile, driver, expressions, skip_failures, jobs, bbox)
     helpers.set_verbosity(ctx, log)
 
     scope_blacklist = ('eval', 'compile', 'exec', 'execfile', 'builtin', 'builtins',
-                       '__builtin__', '__builtins__', 'globals', 'locals')
+                       '__builtin__', '__builtins__', '__import__', 'globals', 'locals')
 
     global_scope = {
         k: v for k, v in globals().items() if k not in ('builtins', '__builtins__')}

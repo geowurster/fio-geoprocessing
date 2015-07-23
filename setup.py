@@ -54,9 +54,10 @@ setup(
     description="A Fiona CLI plugin for performing geoprocessing operations.",
     entry_points="""
         [fiona.fio_commands]
-        buffer=fio_geoprocessing.buffer:buffer_geometries
-        centroid=fio_geoprocessing.centroid:compute_centroids
-        filter=fio_geoprocessing.filter:apply_filter
+        buffer=fio_geoprocessing.buffer:buffer
+        centroid=fio_geoprocessing.centroid:centroid
+        filter=fio_geoprocessing.filter:filter
+        reproject=fio_geoprocessing.reproject:reproject
     """,
     extras_require={
         'test': ['pytest', 'pytest-cov']
