@@ -17,7 +17,7 @@ from fio_geoproc.helpers import processor
     help="Simplify to within this distance."
 )
 @click.option(
-    '--preserve-topology / --no-preserve-topology', show_default=True,
+    '--preserve-topology / --no-preserve-topology', default=True, show_default=True,
     help="If enabled, avoid creating invalid geometries and preserve general geometric shape."
 )
 @processor
