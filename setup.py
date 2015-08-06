@@ -15,15 +15,11 @@ with open('README.rst') as f:
     readme = f.read().strip()
 
 
-with open('LICENSE.txt') as f:
-    license = f.read().strip()
-
-
 version = None
 author = None
 email = None
 source = None
-with open(os.path.join('fio_geoprocessing', '__init__.py')) as f:
+with open(os.path.join('fio_geoproc', '__init__.py')) as f:
     for line in f:
         if line.strip().startswith('__version__'):
             version = line.split('=')[1].strip().replace('"', '').replace("'", '')
@@ -51,21 +47,38 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Topic :: Scientific/Engineering :: GIS'
     ],
-    description="A Fiona CLI plugin for performing geoprocessing operations.",
+    description="A Fiona CLI plugin for performing streaming geoprocessing operations.",
     entry_points="""
-        [fiona.fio_commands]
-        buffer=fio_geoprocessing.buffer:buffer
-        centroid=fio_geoprocessing.centroid:centroid
-        filter=fio_geoprocessing.filter:filter
-        reproject=fio_geoprocessing.reproject:reproject
+        [fiona.fio_plugins]
+        geoproc=fio_geoproc.geoproc:geoproc
+
+        [fio_geoproc.commands]
+        buffer=fio_geoproc.buffer:buffer
+        cat=fio_geoproc.cat:cat
+        centroid=fio_geoproc.centroid:centroid
+        load=fio_geoproc.load:load
+        reproject=fio_geoproc.reproject:reproject
+        simplify=fio_geoproc.simplify:simplify
+
+        # This command will be removed
+        printer=fio_geoproc.printer:printer
     """,
     extras_require={
-        'test': ['pytest', 'pytest-cov']
+        'dev': [
+            'pytest',
+            'pytest-cov',
+            'coveralls'
+        ]
     },
     include_package_data=True,
-    install_requires=['click>=0.3', 'shapely', 'fiona'],
-    keywords='Fiona fio GIS vector geoprocessing plugin',
-    license=license,
+    install_requires=[
+        'click>=0.3',
+        'shapely',
+        'fiona>=1.6',
+        'click_plugins'
+    ],
+    keywords='Fiona GIS command line plugin',
+    license="New BSD",
     long_description=readme,
     name='fio-geoprocessing',
     packages=find_packages(),
